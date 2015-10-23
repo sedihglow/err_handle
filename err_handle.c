@@ -110,7 +110,7 @@ void errMsg(const char *fstring, ...)/*#{{{*/
     errno = sverr;
 } /* end errMsg #}}} */
 
-void noerr_msg(const char *fstring, ...)/*#{{{*/
+void noerrMsg(const char *fstring, ...)/*#{{{*/
 {
     va_list vargList;
 

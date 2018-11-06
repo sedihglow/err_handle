@@ -53,9 +53,12 @@ void terminate(register int32_t exitType)/*#{{{*/
        on exitType */
     cdEnv = getenv("EF_DUMPCORE");
 
-    (cdEnv != NULL && *cdEnv != '\0') ? abort()
-                                      : (exitType & EXIT_EH) ? exit(EXIT_FAILURE)
-                                      : _exit(EXIT_FAILURE);
+    if (cdEnv != NULL && *cdEnv != '\0')
+        abort();
+    else if (exitType & EXIT_EH)
+        exit(EXIT_FAILURE);
+    else    
+        _exit(EXIT_FAILURE);
 } /* end terminate #}}} */
 
 void outputErr(int32_t flags, int32_t errnum, const char* fstring,/*#{{{*/
@@ -73,23 +76,20 @@ void outputErr(int32_t flags, int32_t errnum, const char* fstring,/*#{{{*/
     /* if flag USE_ERRNUM_EH was used, fill errstr with the appropriate error
        information. if flag USE_ERRNUM_EH was used check range on errnum,
        if its out of range of errno constants insert UNKNOWNERR. */
-    if(flags & USE_ERRNUM_EH)
-    {
+    if (flags & USE_ERRNUM_EH) {
         snprintf(errStr, _BUFF_SIZE_, "[%s %s]",
              ((errnum > 0 && errnum <= MAX_ENAME) ? ename[errnum] : "?UNKWN?"),
              strerror(errnum));
-    } /* end if */
-    else
-    {
+    } else {
         snprintf(errStr, _BUFF_SIZE_, "[NONUM]");
-    } /* end else */
+    }
 
     /* combine the final callMsg and final errStr to create the finalMsg to
        display in stderr. */
     snprintf(finalMsg, _BUFF_SIZE_, "ERROR: %s %s\n", errStr, callMsg);
 
-    if(flags & STDFLUSH_EH){
-        fflush(stdout);}
+    if(flags & STDFLUSH_EH)
+        fflush(stdout);
 
     /* print finalMsg to stderr */
     fputs(finalMsg, stderr);

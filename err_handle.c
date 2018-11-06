@@ -1,3 +1,7 @@
+/*******************************************************************************
+ * Original design from The linux programming interface by Michael kerrisk
+ ******************************************************************************/
+
 /*
     implements all functions declared in err_handle.h
 
@@ -34,9 +38,9 @@ __attribute__((__noreturn__))
                 /* static prototypes #{{{ */
 /* terminate the program, if appropriate produce a core dump file with abort()
    else  mainExit = false (_exit), mainExit = true (exit()) */
-static void terminate(register int32_t exitType); 
+static void terminate(register int32_t exitType);
 
-/* Outputs error messages. Flags include, USE_ERRNUM_EH | STDFLUSH_EH */ 
+/* Outputs error messages. Flags include, USE_ERRNUM_EH | STDFLUSH_EH */
 static void outputErr(int32_t flags, int32_t errnum, const char* format, va_list ap);
 /*#}}}*/
 
@@ -49,7 +53,7 @@ void terminate(register int32_t exitType)/*#{{{*/
        on exitType */
     cdEnv = getenv("EF_DUMPCORE");
 
-    (cdEnv != NULL && *cdEnv != '\0') ? abort() 
+    (cdEnv != NULL && *cdEnv != '\0') ? abort()
                                       : (exitType & EXIT_EH) ? exit(EXIT_FAILURE)
                                       : _exit(EXIT_FAILURE);
 } /* end terminate #}}} */
@@ -57,21 +61,21 @@ void terminate(register int32_t exitType)/*#{{{*/
 void outputErr(int32_t flags, int32_t errnum, const char* fstring,/*#{{{*/
                va_list argList)
 {
-#define _BUFF_SIZE_ 500 
+#define _BUFF_SIZE_ 500
 
     char finalMsg[_BUFF_SIZE_] = {'\0'};   /* final msg to send to stderr */
     char callMsg[_BUFF_SIZE_]  = {'\0'};   /* msg from original call */
     char errStr[_BUFF_SIZE_]   = {'\0'};   /* string from error information */
-    
+
     /* place the fstring and its relevent argList into callMsg. */
     vsnprintf(callMsg, _BUFF_SIZE_, fstring, argList);
 
     /* if flag USE_ERRNUM_EH was used, fill errstr with the appropriate error
-       information. if flag USE_ERRNUM_EH was used check range on errnum, 
+       information. if flag USE_ERRNUM_EH was used check range on errnum,
        if its out of range of errno constants insert UNKNOWNERR. */
     if(flags & USE_ERRNUM_EH)
     {
-        snprintf(errStr, _BUFF_SIZE_, "[%s %s]", 
+        snprintf(errStr, _BUFF_SIZE_, "[%s %s]",
              ((errnum > 0 && errnum <= MAX_ENAME) ? ename[errnum] : "?UNKWN?"),
              strerror(errnum));
     } /* end if */
@@ -80,23 +84,23 @@ void outputErr(int32_t flags, int32_t errnum, const char* fstring,/*#{{{*/
         snprintf(errStr, _BUFF_SIZE_, "[NONUM]");
     } /* end else */
 
-    /* combine the final callMsg and final errStr to create the finalMsg to 
+    /* combine the final callMsg and final errStr to create the finalMsg to
        display in stderr. */
     snprintf(finalMsg, _BUFF_SIZE_, "ERROR: %s %s\n", errStr, callMsg);
-    
+
     if(flags & STDFLUSH_EH){
         fflush(stdout);}
-    
+
     /* print finalMsg to stderr */
     fputs(finalMsg, stderr);
     fflush(stderr); /* in case stderr is not currently line buffered */
-#undef _BUFF_SIZE_ 
+#undef _BUFF_SIZE_
 } /* end outputErr #}}} */
 
 
                 /* header functions */
 
-void errMsg(const char *fstring, ...)/*#{{{*/
+void err_msg(const char *fstring, ...)/*#{{{*/
 {
     va_list vargList;
     register int32_t sverr = errno;

@@ -1,6 +1,12 @@
 /*******************************************************************************
- * Original design from The linux programming interface by Michael kerrisk
+ * Level 1 cache similator project
+ * ECE 4/585
+ * Mark Faust
+ * 12/3/2017
+ * Portland State University, Portland OR
+ * written and property of : James Ross
  ******************************************************************************/
+
 
 /*
     implements all functions declared in err_handle.h
@@ -16,7 +22,7 @@
 #include <string.h>
 
 #include "err_handle.h"
-#include "ename.c.inc" /* holds error code names for printing */
+#include "ename_array.inc" /* holds error code names for printing */
 
 /* this macro stops -Wall from producing a warning when exiting from a
    function that is non-void. */
@@ -32,6 +38,9 @@ __attribute__((__noreturn__))
     #define STDFLUSH_EH    0x8 /* flush stdio before printing msg to stderr */
 #endif
 
+#define FINAL_SIZE 512
+#define CALL_SIZE 256
+#define ERR_SIZE 128
 
                 /* static functions */
 
@@ -53,40 +62,36 @@ void terminate(register int32_t exitType)/*#{{{*/
        on exitType */
     cdEnv = getenv("EF_DUMPCORE");
 
-    if (cdEnv != NULL && *cdEnv != '\0')
-        abort();
-    else if (exitType & EXIT_EH)
-        exit(EXIT_FAILURE);
-    else    
-        _exit(EXIT_FAILURE);
+    (cdEnv != NULL && *cdEnv != '\0') ? abort()
+                                      : (exitType & EXIT_EH) ? exit(EXIT_FAILURE)
+                                      : _exit(EXIT_FAILURE);
 } /* end terminate #}}} */
 
 void outputErr(int32_t flags, int32_t errnum, const char* fstring,/*#{{{*/
                va_list argList)
 {
-#define _BUFF_SIZE_ 500
 
-    char finalMsg[_BUFF_SIZE_] = {'\0'};   /* final msg to send to stderr */
-    char callMsg[_BUFF_SIZE_]  = {'\0'};   /* msg from original call */
-    char errStr[_BUFF_SIZE_]   = {'\0'};   /* string from error information */
+    char finalMsg[FINAL_SIZE] = {'\0'};   /* final msg to send to stderr */
+    char callMsg[CALL_SIZE]  = {'\0'};   /* msg from original call */
+    char errStr[ERR_SIZE]   = {'\0'};   /* string from error information */
 
     /* place the fstring and its relevent argList into callMsg. */
-    vsnprintf(callMsg, _BUFF_SIZE_, fstring, argList);
+    vsnprintf(callMsg, CALL_SIZE, fstring, argList);
 
     /* if flag USE_ERRNUM_EH was used, fill errstr with the appropriate error
        information. if flag USE_ERRNUM_EH was used check range on errnum,
        if its out of range of errno constants insert UNKNOWNERR. */
     if (flags & USE_ERRNUM_EH) {
-        snprintf(errStr, _BUFF_SIZE_, "[%s %s]",
+        snprintf(errStr, ERR_SIZE, "[%s %s]",
              ((errnum > 0 && errnum <= MAX_ENAME) ? ename[errnum] : "?UNKWN?"),
              strerror(errnum));
     } else {
-        snprintf(errStr, _BUFF_SIZE_, "[NONUM]");
+        snprintf(errStr, ERR_SIZE, "[NONUM]");
     }
 
     /* combine the final callMsg and final errStr to create the finalMsg to
        display in stderr. */
-    snprintf(finalMsg, _BUFF_SIZE_, "ERROR: %s %s\n", errStr, callMsg);
+    snprintf(finalMsg, FINAL_SIZE, "ERROR: %s %s\n", errStr, callMsg);
 
     if(flags & STDFLUSH_EH)
         fflush(stdout);

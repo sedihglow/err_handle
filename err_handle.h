@@ -6,7 +6,6 @@
  *
  *   filename: err_handle.h
  *
- * Original design from The linux programming interface by Michael kerrisk
  ******************************************************************************/
 
 #ifndef _ERR_HANDLE_H
